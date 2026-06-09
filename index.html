@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1E2749">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mini Game Hub — Brand Campaign</title>
+
+<!-- ============================================================
+     CONFIG BLOCK — EDIT THIS TO REBRAND
+     ============================================================ -->
+<script>
+const CONFIG = {
+  // ─── BRAND ─────────────────────────────────────────────
+  brand: {
+    name_en: "DEMO BRAND",
+    name_zh: "示范品牌",
+    tagline_en: "Grand Launch Carnival",
+    tagline_zh: "盛大开幕狂欢",
+    logoEmoji: "✦",        // shown in header
+    contactPhone: "+60 12-345 6789",
+    contactEmail: "hello@demobrand.my",
+    contactTelegram: "@demobrand_my",
+    website: "https://demobrand.my"
+  },
+
+  // ─── CAMPAIGN WINDOW (ISO 8601 in Asia/Kuala_Lumpur, +08:00) ──
+  campaign: {
+    startISO: "2026-06-08T00:00:00+08:00",
+    endISO:   "2026-07-08T23:59:59+08:00",
+    drawDateISO: "2026-07-10T20:00:00+08:00",  // when winners are drawn
+    region: "Malaysia"
+  },
+
+  // ─── PRIZE POOL (define real inventory) ──────────────────
+  prizes: [
+    { tier: "grand",  name_en: "iPhone 16 Pro",       name_zh: "iPhone 16 Pro",      qty: 1,   emoji: "📱" },
+    { tier: "second", name_en: "RM500 Cash Voucher",  name_zh: "RM500 现金礼券",      qty: 5,   emoji: "💴" },
+    { tier: "third",  name_en: "RM100 Brand Voucher", name_zh: "RM100 品牌礼券",      qty: 50,  emoji: "🎟️" },
+    { tier: "merch",  name_en: "Brand Merchandise",   name_zh: "品牌周边礼包",        qty: 200, emoji: "🎁" }
+  ],
+
+  // ─── ENTRY THRESHOLDS (game score → draw entries) ─────────
+  entryRules: {
+    fishHunter: [
+      { minScore: 100,  entries: 1 },
+      { minScore: 250,  entries: 3 },
+      { minScore: 500,  entries: 6 },
+      { minScore: 1000, entries: 12 }
+    ],
+    memoryMatch: [
+      { minMatches: 4, entries: 1 },
+      { minMatches: 6, entries: 3 },
+      { minMatches: 8, entries: 6 }   // perfect clear
+    ],
+    perfectMatchBonus: 5,
+    dailyFirstPlayBonus: 2
+  },
+
+  // ─── REFERRAL MILESTONES ──────────────────────────────────
+  referral: {
+    onSignup: 5,    // both inviter & invitee get this many entries when invitee registers + plays once
+    milestones: [
+      { count: 3,  bonusEntries: 15,  label_en: "3 friends",  label_zh: "3 位好友" },
+      { count: 5,  bonusEntries: 35,  label_en: "5 friends",  label_zh: "5 位好友" },
+      { count: 10, bonusEntries: 90,  label_en: "10 friends", label_zh: "10 位好友" }
+    ]
+  },
+
+  // ─── ADMIN ───────────────────────────────────────────────
+  admin: { password: "admin2026" },
+
+  // ─── PDPA NOTICE (Malaysia Personal Data Protection Act 2010) ─
+  pdpa: {
+    en: "By registering, you consent to your name, phone, email and Telegram being collected and used by the campaign organiser to contact you about this campaign and verify prize winners. Your data will be deleted within 90 days after campaign close. You may request deletion any time by emailing the contact above.",
+    zh: "注册即表示您同意活动主办方收集并使用您的姓名、电话、电邮和 Telegram，仅用于本次活动联系与得奖核实。您的资料将在活动结束后 90 天内删除。如需提前删除，请通过上方电邮联系我们。"
+  },
+
+  // ─── THEME (CSS variables; tweak to match brand colors) ──
+  theme: {
+    bg:      "#FFF6E5",
+    ink:     "#1E2749",
+    primary: "#FF4E50",
+    accent:  "#FFD93D",
+    mint:    "#06B6A4",
+    cream:   "#FFFAF0"
+  }
+};
+</script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Manrope:wght@400;600;700&family=Noto+Sans+SC:wght@500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   THEME VARIABLES (applied from CONFIG.theme at runtime)
+   ============================================================ */
+:root {
+  --bg: #FFF6E5;
+  --ink: #1E2749;
+  --primary: #FF4E50;
+  --accent: #FFD93D;
+  --mint: #06B6A4;
+  --cream: #FFFAF0;
+  --shadow: 0 4px 0 rgba(30,39,73,.18), 0 12px 24px -8px rgba(30,39,73,.25);
+  --font-display: 'Unbounded', 'ZCOOL KuaiLe', system-ui, sans-serif;
+  --font-body: 'Manrope', 'Noto Sans SC', system-ui, sans-serif;
+}
+html[lang="zh"] {
+  --font-display: 'ZCOOL KuaiLe', 'Unbounded', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'Manrope', system-ui, sans-serif;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow-x: hidden; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255,217,61,.35) 0, transparent 35%),
+    radial-gradient(circle at 88% 82%, rgba(6,182,164,.22) 0, transparent 38%);
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: none; cursor: pointer; }
+a { color: inherit; }
+
+/* Noise texture overlay (subtle) */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
+  opacity: .04; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+#app { max-width: 460px; margin: 0 auto; min-height: 100dvh; position: relative; padding: 16px 16px 88px; }
+.screen { display: none; animation: fadeUp .35s ease both; }
+.screen.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0 16px;
+}
+.brand-mark {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
+}
+.brand-mark .logo {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: var(--ink); color: var(--accent);
+  display: grid; place-items: center; font-size: 18px;
+  box-shadow: var(--shadow);
+}
+.lang-toggle {
+  display: flex; background: var(--cream); border-radius: 999px; padding: 3px;
+  box-shadow: inset 0 0 0 1px rgba(30,39,73,.1);
+}
+.lang-toggle button {
+  padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  color: var(--ink); opacity: .55;
+}
+.lang-toggle button.on { background: var(--ink); color: var(--accent); opacity: 1; }
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+.h-display { font-size: 36px; }
+.h-jumbo { font-size: 48px; }
+.h-section { font-size: 22px; margin-bottom: 12px; }
+.eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+  background: var(--ink); color: var(--accent);
+  padding: 4px 10px; border-radius: 999px;
+}
+.muted { color: rgba(30,39,73,.6); }
+
+/* ============================================================
+   CARDS & BUTTONS
+   ============================================================ */
+.card {
+  background: var(--cream); border-radius: 18px; padding: 18px;
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow);
+}
+.card.tilt { transform: rotate(-1.2deg); }
+.card.tilt-right { transform: rotate(1deg); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 22px; border-radius: 14px;
+  font-family: var(--font-display); font-weight: 800; font-size: 15px;
+  background: var(--primary); color: white;
+  border: 2px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s;
+  letter-spacing: .02em;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.btn.ghost { background: var(--cream); color: var(--ink); }
+.btn.gold { background: var(--accent); color: var(--ink); }
+.btn.mint { background: var(--mint); color: white; }
+.btn.lg { padding: 18px 28px; font-size: 17px; width: 100%; }
+.btn.sm { padding: 9px 14px; font-size: 13px; border-radius: 10px; box-shadow: 0 2px 0 var(--ink); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ============================================================
+   FORM
+   ============================================================ */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; font-size: 12px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; margin-bottom: 6px; color: var(--ink);
+}
+.field input {
+  width: 100%; padding: 13px 14px;
+  background: var(--cream); border: 2px solid var(--ink);
+  border-radius: 12px; font-size: 15px;
+  transition: box-shadow .15s;
+}
+.field input:focus { outline: none; box-shadow: 0 0 0 3px var(--accent); }
+.field.invalid input { border-color: var(--primary); }
+.field .hint { font-size: 11px; color: rgba(30,39,73,.6); margin-top: 4px; }
+.checkbox-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px; background: var(--cream); border: 2px solid var(--ink); border-radius: 12px;
+  margin-bottom: 14px;
+}
+.checkbox-row input { margin-top: 3px; flex-shrink: 0; width: 18px; height: 18px; }
+.checkbox-row label { font-size: 12px; line-height: 1.45; }
+
+/* ============================================================
+   SPLASH / HERO
+   ============================================================ */
+.hero {
+  position: relative; padding: 28px 24px 32px; margin-bottom: 18px;
+  background: var(--ink); color: var(--cream);
+  border-radius: 24px;
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.hero::after {
+  content: ""; position: absolute; right: -40px; bottom: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, var(--primary), transparent 70%);
+  opacity: .6;
+}
+.hero .eyebrow { background: var(--accent); color: var(--ink); }
+.hero .h-display { color: var(--accent); margin-top: 12px; }
+.hero p { margin-top: 8px; opacity: .85; font-size: 14px; }
+.hero .countdown {
+  display: flex; gap: 8px; margin-top: 20px; position: relative; z-index: 2;
+}
+.cd-unit {
+  flex: 1; background: var(--cream); color: var(--ink);
+  padding: 10px 6px; border-radius: 12px; text-align: center;
+  border: 2px solid var(--accent);
+}
+.cd-unit .n { font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1; }
+.cd-unit .l { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-top: 4px; opacity: .65; }
+
+/* ============================================================
+   STATS PILLS
+   ============================================================ */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.stat {
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 14px;
+  padding: 12px 8px; text-align: center;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.stat .n { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--primary); }
+.stat .l { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-top: 2px; opacity: .7; }
+
+/* ============================================================
+   GAME CARDS
+   ============================================================ */
+.game-grid { display: grid; gap: 12px; }
+.game-card {
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 18px;
+  padding: 18px; box-shadow: var(--shadow); text-align: left;
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px;
+}
+.game-card .icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  display: grid; place-items: center; font-size: 36px;
+  flex-shrink: 0;
+}
+.game-card.fish .icon { background: linear-gradient(135deg, #06B6A4, #0A8580); color: white; }
+.game-card.match .icon { background: linear-gradient(135deg, var(--primary), #C73B3D); color: white; }
+.game-card h3 { font-size: 18px; }
+.game-card p { font-size: 12px; opacity: .65; margin-top: 2px; }
+.game-card .play-tag {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--accent); color: var(--ink);
+  font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+
+/* ============================================================
+   PRIZE STRIP
+   ============================================================ */
+.prize-strip {
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px;
+  scrollbar-width: none;
+}
+.prize-strip::-webkit-scrollbar { display: none; }
+.prize-chip {
+  flex: 0 0 auto;
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 14px;
+  padding: 12px 14px; min-width: 130px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.prize-chip .emoji { font-size: 28px; }
+.prize-chip .name { font-weight: 700; font-size: 12px; margin-top: 4px; }
+.prize-chip .qty { font-size: 10px; color: var(--primary); font-weight: 700; margin-top: 2px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge {
+  display: inline-block; padding: 3px 9px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+}
+.badge.earned   { background: var(--accent); color: var(--ink); }
+.badge.drawn    { background: var(--mint); color: white; }
+.badge.won      { background: var(--primary); color: white; }
+.badge.claimed  { background: var(--ink); color: var(--cream); }
+.badge.forfeited{ background: #aaa; color: white; }
+
+/* ============================================================
+   GAME: FISH HUNTER
+   ============================================================ */
+.game-screen {
+  position: fixed; inset: 0; z-index: 200;
+  background: #0a1428;
+  display: none; flex-direction: column;
+}
+.game-screen.active { display: flex; }
+.game-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: rgba(0,0,0,.45); color: white;
+  font-family: var(--font-display); font-weight: 700;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.hud-cell { text-align: center; }
+.hud-cell .v { font-size: 22px; line-height: 1; color: var(--accent); }
+.hud-cell .l { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; opacity: .7; margin-top: 3px; }
+.game-canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+#fishCanvas, #matchBoard { display: block; width: 100%; height: 100%; }
+.game-back {
+  position: absolute; top: 12px; left: 12px; z-index: 5;
+  background: rgba(0,0,0,.5); color: white;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 18px;
+  border: 1px solid rgba(255,255,255,.2);
+}
+
+/* ============================================================
+   GAME: MEMORY MATCH (DOM grid)
+   ============================================================ */
+.match-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  padding: 14px; max-width: 460px; margin: 0 auto;
+}
+.mcard {
+  aspect-ratio: 1;
+  position: relative; cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform .4s cubic-bezier(.4,.0,.2,1);
+}
+.mcard.flipped, .mcard.matched { transform: rotateY(180deg); }
+.mcard .face {
+  position: absolute; inset: 0;
+  border-radius: 12px; border: 2px solid var(--ink);
+  display: grid; place-items: center;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  font-size: 30px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.mcard .back {
+  background: linear-gradient(135deg, var(--primary), #c73b3d);
+  color: white;
+  font-family: var(--font-display); font-weight: 800;
+}
+.mcard .front {
+  background: var(--cream); transform: rotateY(180deg);
+}
+.mcard.matched .front { background: var(--accent); }
+.mcard.matched { animation: pop .4s ease; }
+@keyframes pop { 0%,100%{transform:rotateY(180deg) scale(1);} 50%{transform:rotateY(180deg) scale(1.08);} }
+
+/* ============================================================
+   RESULT SCREEN
+   ============================================================ */
+.result-card { text-align: center; padding: 28px 22px; }
+.result-card .h-jumbo { color: var(--primary); margin: 10px 0; }
+.result-card .entries-won {
+  display: inline-block; padding: 10px 20px;
+  background: var(--accent); color: var(--ink);
+  border-radius: 999px; border: 2px solid var(--ink);
+  font-family: var(--font-display); font-weight: 800; font-size: 18px;
+  margin: 10px 0;
+}
+.share-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+.share-btn {
+  padding: 10px 6px; border-radius: 12px;
+  background: var(--cream); border: 2px solid var(--ink);
+  font-size: 11px; font-weight: 700;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.share-btn .ico { font-size: 22px; }
+
+/* ============================================================
+   BOTTOM NAV
+   ============================================================ */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  max-width: 460px; margin: 0 auto;
+  background: var(--cream); border-top: 2px solid var(--ink);
+  display: none; padding: 10px 14px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  gap: 4px; justify-content: space-around; z-index: 50;
+  box-shadow: 0 -4px 16px rgba(30,39,73,.08);
+}
+.bottom-nav.show { display: flex; }
+.nav-btn {
+  flex: 1; padding: 6px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 10px; font-weight: 700; color: var(--ink); opacity: .55;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.nav-btn.on { opacity: 1; color: var(--primary); }
+.nav-btn .ico { font-size: 22px; }
+
+/* ============================================================
+   ENTRIES LIST
+   ============================================================ */
+.entry-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; background: var(--cream);
+  border: 2px solid var(--ink); border-radius: 14px;
+  margin-bottom: 8px; box-shadow: 0 3px 0 var(--ink);
+}
+.entry-row .left { display: flex; align-items: center; gap: 10px; }
+.entry-row .ico { font-size: 22px; }
+.entry-row .meta { font-size: 11px; opacity: .6; margin-top: 2px; }
+
+/* ============================================================
+   REFERRAL
+   ============================================================ */
+.ref-box {
+  text-align: center; padding: 22px;
+  background: var(--ink); color: var(--cream);
+  border-radius: 18px; border: 2px solid var(--ink);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.ref-code {
+  font-family: var(--font-display); font-weight: 800; font-size: 32px; color: var(--accent);
+  letter-spacing: .04em; margin: 8px 0;
+}
+.ref-link {
+  background: rgba(255,255,255,.08); padding: 8px 12px; border-radius: 8px;
+  font-family: monospace; font-size: 11px; word-break: break-all;
+  margin-top: 8px;
+}
+.milestone {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; margin-bottom: 8px;
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 14px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.milestone.unlocked { background: var(--accent); }
+.milestone .reward { font-family: var(--font-display); font-weight: 800; color: var(--primary); }
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+.lb-row {
+  display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center;
+  padding: 12px; margin-bottom: 6px;
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 14px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.lb-row.me { background: var(--accent); }
+.lb-row .rank {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ink); color: var(--accent);
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 800;
+}
+.lb-row .rank.gold { background: var(--accent); color: var(--ink); border: 2px solid var(--ink); }
+.lb-row .ent { font-family: var(--font-display); font-weight: 800; color: var(--primary); }
+
+/* ============================================================
+   ADMIN
+   ============================================================ */
+.admin-tabs { display: flex; gap: 4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+.admin-tabs::-webkit-scrollbar { display: none; }
+.admin-tabs button {
+  padding: 8px 14px; border-radius: 999px;
+  background: var(--cream); border: 2px solid var(--ink);
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.admin-tabs button.on { background: var(--ink); color: var(--accent); }
+.admin-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px;
+  background: var(--cream); border: 2px solid var(--ink); border-radius: 12px;
+  overflow: hidden;
+}
+.admin-table th, .admin-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(30,39,73,.1); }
+.admin-table th { background: var(--ink); color: var(--cream); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-section { margin-bottom: 18px; }
+
+/* ============================================================
+   TOASTS / CONFETTI
+   ============================================================ */
+#toastWrap { position: fixed; top: 16px; left: 0; right: 0; z-index: 300; pointer-events: none; padding: 0 16px; }
+.toast {
+  background: var(--ink); color: var(--cream);
+  padding: 12px 16px; border-radius: 14px;
+  margin: 0 auto 8px; max-width: 360px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  animation: toastIn .3s ease, toastOut .3s ease 2.5s forwards;
+  border: 2px solid var(--accent);
+}
+@keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toastOut { to { transform: translateY(-20px); opacity: 0; } }
+
+#confettiLayer { position: fixed; inset: 0; pointer-events: none; z-index: 250; overflow: hidden; }
+.confetti-piece {
+  position: absolute; width: 8px; height: 12px;
+  animation: cfall 3s ease-in forwards;
+}
+@keyframes cfall {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.section { margin-bottom: 22px; }
+.row-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mt-16 { margin-top: 16px; }
+.hidden { display: none !important; }
+
+@media (max-width: 360px) {
+  .h-display { font-size: 30px; }
+  .h-jumbo { font-size: 38px; }
+}
+</style>
+</head>
+<body>
+
+<div id="toastWrap"></div>
+<div id="confettiLayer"></div>
+
+<div id="app">
+
+  <!-- ─── TOPBAR ─────────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="brand-mark">
+      <div class="logo" id="brandLogo">✦</div>
+      <div id="brandName">DEMO BRAND</div>
+    </div>
+    <div class="lang-toggle">
+      <button data-lang="en" class="on">EN</button>
+      <button data-lang="zh">中文</button>
+    </div>
+  </div>
+
+  <!-- ─── SCREEN: SPLASH ────────────────────────────────── -->
+  <section class="screen active" id="screen-splash">
+    <div class="hero">
+      <span class="eyebrow" data-t="campaignBadge">Live Campaign</span>
+      <h1 class="h-display" data-t="campaignTitle">Grand Launch Carnival</h1>
+      <p data-t="campaignBlurb">Play 2 mini games, earn draw entries, win real prizes.</p>
+      <div class="countdown" id="splashCountdown">
+        <div class="cd-unit"><div class="n" id="cdDays">--</div><div class="l" data-t="days">days</div></div>
+        <div class="cd-unit"><div class="n" id="cdHours">--</div><div class="l" data-t="hours">hrs</div></div>
+        <div class="cd-unit"><div class="n" id="cdMins">--</div><div class="l" data-t="mins">min</div></div>
+        <div class="cd-unit"><div class="n" id="cdSecs">--</div><div class="l" data-t="secs">sec</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="row-between mt-8" style="margin-bottom:10px;">
+        <h2 class="h-section" data-t="prizePool">Prize Pool</h2>
+        <span class="muted" style="font-size:11px;" data-t="totalPrizes">Total prizes ✦</span>
+      </div>
+      <div class="prize-strip" id="prizeStrip"></div>
+    </div>
+
+    <button class="btn lg gold" onclick="go('register')" data-t="startCta">Start &amp; Register</button>
+    <p class="muted mt-12" style="font-size:11px; text-align:center;" data-t="alreadyJoined">Already joined? You'll be taken to your hub.</p>
+  </section>
+
+  <!-- ─── SCREEN: REGISTER ──────────────────────────────── -->
+  <section class="screen" id="screen-register">
+    <span class="eyebrow" data-t="step1of1">Step 1 of 1</span>
+    <h2 class="h-section mt-8" data-t="registerTitle">Join the Carnival</h2>
+    <p class="muted" data-t="registerBlurb">Tell us where to reach you if you win.</p>
+
+    <form id="regForm" class="mt-16">
+      <div class="field">
+        <label data-t="name">Your name</label>
+        <input type="text" name="name" required maxlength="40" autocomplete="name">
+      </div>
+      <div class="field">
+        <label data-t="phone">Phone number</label>
+        <input type="tel" name="phone" required pattern="^[0-9 +\-]{8,16}$" placeholder="+60 12-345 6789">
+        <div class="hint" data-t="phoneHint">Used to verify if you win a prize.</div>
+      </div>
+      <div class="field">
+        <label data-t="email">Email</label>
+        <input type="email" name="email" required>
+      </div>
+      <div class="field">
+        <label data-t="telegram">Telegram username <span style="opacity:.55; text-transform:none;">(optional)</span></label>
+        <input type="text" name="telegram" placeholder="@yourhandle" maxlength="40">
+      </div>
+      <div class="field">
+        <label data-t="referredBy">Friend's referral code <span style="opacity:.55; text-transform:none;">(optional)</span></label>
+        <input type="text" name="referredBy" id="referredByInput" placeholder="ABC123" maxlength="10" style="text-transform:uppercase;">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="pdpaCheck" required>
+        <label for="pdpaCheck" id="pdpaLabel"></label>
+      </div>
+      <button type="submit" class="btn lg" data-t="register">Register &amp; Play</button>
+    </form>
+  </section>
+
+  <!-- ─── SCREEN: HOME HUB ─────────────────────────────── -->
+  <section class="screen" id="screen-home">
+    <div class="hero">
+      <span class="eyebrow" id="welcomeName"></span>
+      <h1 class="h-display" style="margin-top:8px;" data-t="yourEntries">Your entries</h1>
+      <div style="font-family: var(--font-display); font-size: 56px; color: var(--accent); font-weight: 800; line-height: 1;" id="totalEntries">0</div>
+      <div class="countdown" id="homeCountdown">
+        <div class="cd-unit"><div class="n" id="hcdDays">--</div><div class="l" data-t="days">days</div></div>
+        <div class="cd-unit"><div class="n" id="hcdHours">--</div><div class="l" data-t="hours">hrs</div></div>
+        <div class="cd-unit"><div class="n" id="hcdMins">--</div><div class="l" data-t="mins">min</div></div>
+        <div class="cd-unit"><div class="n" id="hcdSecs">--</div><div class="l" data-t="secs">sec</div></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="n" id="statGames">0</div><div class="l" data-t="gamesPlayed">Games</div></div>
+      <div class="stat"><div class="n" id="statRefs">0</div><div class="l" data-t="friends">Friends</div></div>
+      <div class="stat"><div class="n" id="statBest">0</div><div class="l" data-t="topScore">Top</div></div>
+    </div>
+
+    <div class="section">
+      <h2 class="h-section" data-t="playToWin">Play to win</h2>
+      <div class="game-grid">
+        <button class="game-card fish" onclick="Fish.start()">
+          <div class="icon">🐠</div>
+          <div>
+            <h3 data-t="fishHunter">Fish Hunter</h3>
+            <p data-t="fishDesc">60s arcade · catch fish, hit milestones</p>
+          </div>
+          <span class="play-tag" data-t="play">play</span>
+        </button>
+        <button class="game-card match" onclick="Match.start()">
+          <div class="icon">🃏</div>
+          <div>
+            <h3 data-t="memoryMatch">Memory Match</h3>
+            <p data-t="matchDesc">60s · match pairs, score combos</p>
+          </div>
+          <span class="play-tag" data-t="play">play</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="row-between" style="margin-bottom:10px;">
+        <h2 class="h-section" data-t="prizePool">Prize Pool</h2>
+        <button class="btn sm ghost" onclick="go('entries')" data-t="myEntries">My entries</button>
+      </div>
+      <div class="prize-strip" id="prizeStripHome"></div>
+    </div>
+  </section>
+
+  <!-- ─── SCREEN: ENTRIES ──────────────────────────────── -->
+  <section class="screen" id="screen-entries">
+    <h2 class="h-section" data-t="myEntries">My entries</h2>
+    <p class="muted" data-t="entriesBlurb">Earned entries go into the final draw on the campaign close date.</p>
+    <div id="entriesList" class="mt-16"></div>
+  </section>
+
+  <!-- ─── SCREEN: REFERRAL ─────────────────────────────── -->
+  <section class="screen" id="screen-referral">
+    <h2 class="h-section" data-t="referAndEarn">Refer &amp; Earn</h2>
+    <div class="ref-box">
+      <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:.1em; color: var(--accent);" data-t="yourCode">Your code</div>
+      <div class="ref-code" id="myRefCode">------</div>
+      <div class="ref-link" id="myRefLink"></div>
+      <div class="share-row mt-16">
+        <button class="share-btn" onclick="Share.via('whatsapp')"><span class="ico">💬</span>WhatsApp</button>
+        <button class="share-btn" onclick="Share.via('telegram')"><span class="ico">✈️</span>Telegram</button>
+        <button class="share-btn" onclick="Share.via('facebook')"><span class="ico">📘</span>Facebook</button>
+        <button class="share-btn" onclick="Share.via('copy')"><span class="ico">📋</span><span data-t="copy">Copy</span></button>
+      </div>
+    </div>
+
+    <h3 class="h-section mt-16" data-t="milestones">Milestones</h3>
+    <div id="milestoneList"></div>
+  </section>
+
+  <!-- ─── SCREEN: LEADERBOARD ──────────────────────────── -->
+  <section class="screen" id="screen-leaderboard">
+    <h2 class="h-section" data-t="leaderboard">Leaderboard</h2>
+    <p class="muted" data-t="leaderboardBlurb">Ranked by total draw entries earned.</p>
+    <div id="lbList" class="mt-16"></div>
+  </section>
+
+  <!-- ─── SCREEN: ADMIN ────────────────────────────────── -->
+  <section class="screen" id="screen-admin">
+    <h2 class="h-section">Admin Dashboard</h2>
+    <div id="adminGate">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="adminPw" placeholder="••••••••">
+      </div>
+      <button class="btn" onclick="Admin.unlock()">Unlock</button>
+    </div>
+    <div id="adminPanel" class="hidden">
+      <div class="admin-tabs">
+        <button class="on" data-tab="stats">Stats</button>
+        <button data-tab="users">Users</button>
+        <button data-tab="entries">Entries</button>
+        <button data-tab="draw">Draw</button>
+        <button data-tab="export">Export</button>
+      </div>
+      <div id="adminTabContent"></div>
+    </div>
+  </section>
+
+  <!-- ─── BOTTOM NAV ───────────────────────────────────── -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-btn on" data-nav="home"><span class="ico">🏠</span><span data-t="home">Home</span></button>
+    <button class="nav-btn" data-nav="entries"><span class="ico">🎟️</span><span data-t="entries">Entries</span></button>
+    <button class="nav-btn" data-nav="referral"><span class="ico">📨</span><span data-t="refer">Refer</span></button>
+    <button class="nav-btn" data-nav="leaderboard"><span class="ico">🏆</span><span data-t="rank">Rank</span></button>
+  </nav>
+
+</div>
+
+<!-- ─── FISH HUNTER GAME OVERLAY ────────────────────────── -->
+<div class="game-screen" id="fishScreen">
+  <button class="game-back" onclick="Fish.quit()">×</button>
+  <div class="game-hud">
+    <div class="hud-cell"><div class="v" id="fishScore">0</div><div class="l" data-t="score">score</div></div>
+    <div class="hud-cell"><div class="v" id="fishTime">60</div><div class="l" data-t="time">time</div></div>
+    <div class="hud-cell"><div class="v" id="fishEntries">0</div><div class="l" data-t="entries">entries</div></div>
+  </div>
+  <div class="game-canvas-wrap">
+    <canvas id="fishCanvas"></canvas>
+  </div>
+</div>
+
+<!-- ─── MEMORY MATCH GAME OVERLAY ──────────────────────── -->
+<div class="game-screen" id="matchScreen" style="background: var(--bg);">
+  <button class="game-back" onclick="Match.quit()" style="background: var(--ink); color: var(--cream);">×</button>
+  <div class="game-hud" style="background: var(--ink); color: var(--cream);">
+    <div class="hud-cell"><div class="v" id="matchScore">0</div><div class="l" data-t="score">score</div></div>
+    <div class="hud-cell"><div class="v" id="matchTime">60</div><div class="l" data-t="time">time</div></div>
+    <div class="hud-cell"><div class="v" id="matchPairs">0/8</div><div class="l" data-t="pairs">pairs</div></div>
+  </div>
+  <div class="game-canvas-wrap" style="background: var(--bg); display:flex; align-items:center;">
+    <div class="match-grid" id="matchBoard"></div>
+  </div>
+</div>
+
+<!-- ─── RESULT MODAL ───────────────────────────────────── -->
+<div class="game-screen" id="resultScreen" style="background: rgba(10,20,40,.92); justify-content:center; padding: 20px;">
+  <div class="card result-card" style="max-width: 400px; margin: 0 auto;">
+    <span class="eyebrow" id="resultLabel">Round Complete</span>
+    <h1 class="h-jumbo" id="resultScoreText">0</h1>
+    <div class="muted" data-t="finalScore">final score</div>
+    <div class="entries-won" id="resultEntries">+0 entries</div>
+    <div class="muted" style="font-size:12px;" data-t="entriesAddedBlurb">Added to your draw pool</div>
+    <div class="share-row">
+      <button class="share-btn" onclick="Share.via('whatsapp')"><span class="ico">💬</span>WhatsApp</button>
+      <button class="share-btn" onclick="Share.via('telegram')"><span class="ico">✈️</span>Telegram</button>
+      <button class="share-btn" onclick="Share.via('facebook')"><span class="ico">📘</span>Facebook</button>
+      <button class="share-btn" onclick="Share.via('copy')"><span class="ico">📋</span><span data-t="copy">Copy</span></button>
+    </div>
+    <button class="btn lg mt-16" onclick="resultClose()" data-t="backToHub">Back to Hub</button>
+  </div>
+</div>
+
+<script>
+/* ===========================================================
+   I18N
+   =========================================================== */
+const I18N = {
+  en: {
+    campaignBadge: "Live Campaign",
+    campaignTitle: CONFIG.brand.tagline_en,
+    campaignBlurb: "Play 2 mini games, earn draw entries, win real prizes.",
+    days: "days", hours: "hrs", mins: "min", secs: "sec",
+    prizePool: "Prize Pool",
+    totalPrizes: "Real inventory · drawn at campaign close",
+    startCta: "Start & Register",
+    alreadyJoined: "Already joined? You'll be taken to your hub.",
+    step1of1: "Step 1 of 1",
+    registerTitle: "Join the Carnival",
+    registerBlurb: "Tell us where to reach you if you win.",
+    name: "Your name", phone: "Phone number", email: "Email",
+    telegram: "Telegram username", referredBy: "Friend's referral code",
+    phoneHint: "Used to verify if you win a prize.",
+    register: "Register & Play",
+    yourEntries: "Your entries",
+    gamesPlayed: "Games", friends: "Friends", topScore: "Top",
+    playToWin: "Play to win",
+    fishHunter: "Fish Hunter",
+    fishDesc: "60s arcade · catch fish, hit milestones",
+    memoryMatch: "Memory Match",
+    matchDesc: "60s · match pairs, score combos",
+    play: "play",
+    myEntries: "My entries",
+    entriesBlurb: "Earned entries go into the final draw on the campaign close date.",
+    referAndEarn: "Refer & Earn",
+    yourCode: "Your code",
+    milestones: "Milestones",
+    leaderboard: "Leaderboard",
+    leaderboardBlurb: "Ranked by total draw entries earned.",
+    score: "score", time: "time", entries: "entries", pairs: "pairs",
+    finalScore: "final score",
+    entriesAddedBlurb: "Added to your draw pool",
+    backToHub: "Back to Hub",
+    copy: "Copy",
+    home: "Home", refer: "Refer", rank: "Rank",
+    welcome: "Welcome",
+    shareText: name => `I'm playing the ${CONFIG.brand.name_en} ${CONFIG.brand.tagline_en}! Use my code ${name} to join and we both get entries.`,
+    noEntriesYet: "No entries yet. Play a game to earn your first one!",
+    sourceFish: "Fish Hunter score",
+    sourceMatch: "Memory Match score",
+    sourceReferral: "Friend joined via your code",
+    sourceMilestone: "Referral milestone",
+    sourceDaily: "Daily first-play bonus",
+    sourcePerfect: "Perfect clear bonus",
+    statusEarned: "Earned", statusDrawn: "Drawn", statusWon: "Won", statusClaimed: "Claimed", statusForfeited: "Forfeited",
+    invalidPhone: "Please enter a valid phone number.",
+    invalidEmail: "Please enter a valid email.",
+    pdpaRequired: "Please confirm consent to continue.",
+    registered: "Welcome! You're in.",
+    copiedLink: "Link copied to clipboard",
+    timeUp: "Time's up!",
+    perfectClear: "Perfect clear!",
+    referralCredited: "Referral credited to your friend",
+    invalidRefCode: "Referral code not recognised; continuing without."
+  },
+  zh: {
+    campaignBadge: "活动进行中",
+    campaignTitle: CONFIG.brand.tagline_zh,
+    campaignBlurb: "玩 2 款迷你游戏，赚抽奖名额，赢真实奖品。",
+    days: "天", hours: "时", mins: "分", secs: "秒",
+    prizePool: "奖品池",
+    totalPrizes: "真实奖品 · 活动结束日开奖",
+    startCta: "开始并注册",
+    alreadyJoined: "已注册？将直接进入活动中心。",
+    step1of1: "第 1 步 / 共 1 步",
+    registerTitle: "加入狂欢",
+    registerBlurb: "告诉我们如何在您中奖时联系您。",
+    name: "姓名", phone: "电话号码", email: "电邮",
+    telegram: "Telegram 用户名", referredBy: "好友推荐码",
+    phoneHint: "中奖时用于核实身份。",
+    register: "注册并开玩",
+    yourEntries: "您的抽奖名额",
+    gamesPlayed: "局数", friends: "好友", topScore: "最高",
+    playToWin: "开玩赢奖",
+    fishHunter: "捕鱼达人",
+    fishDesc: "60秒街机 · 点击捕鱼，达标得名额",
+    memoryMatch: "翻牌配对",
+    matchDesc: "60秒 · 配对成功，连击加分",
+    play: "开玩",
+    myEntries: "我的名额",
+    entriesBlurb: "所得名额将于活动结束日参与抽奖。",
+    referAndEarn: "邀请好友 一起赢",
+    yourCode: "您的推荐码",
+    milestones: "里程碑奖励",
+    leaderboard: "排行榜",
+    leaderboardBlurb: "按累计抽奖名额排名。",
+    score: "分数", time: "倒数", entries: "名额", pairs: "对",
+    finalScore: "最终得分",
+    entriesAddedBlurb: "已加入您的抽奖池",
+    backToHub: "返回主页",
+    copy: "复制",
+    home: "主页", refer: "邀请", rank: "排名",
+    welcome: "欢迎",
+    shareText: name => `我正在玩 ${CONFIG.brand.name_zh} ${CONFIG.brand.tagline_zh}！用我的推荐码 ${name} 注册，咱俩都拿名额。`,
+    noEntriesYet: "还没有名额。开玩一局即可获得首份名额！",
+    sourceFish: "捕鱼达人得分",
+    sourceMatch: "翻牌配对得分",
+    sourceReferral: "好友通过您的推荐码注册",
+    sourceMilestone: "推荐里程碑",
+    sourceDaily: "每日首玩奖励",
+    sourcePerfect: "全配对奖励",
+    statusEarned: "已获得", statusDrawn: "已抽签", statusWon: "中奖", statusClaimed: "已领取", statusForfeited: "已逾期",
+    invalidPhone: "请输入有效的电话号码。",
+    invalidEmail: "请输入有效的电邮。",
+    pdpaRequired: "请确认知情同意以继续。",
+    registered: "欢迎加入！",
+    copiedLink: "链接已复制到剪贴板",
+    timeUp: "时间到！",
+    perfectClear: "完美通关！",
+    referralCredited: "已为推荐人记账",
+    invalidRefCode: "推荐码无效；将继续注册。"
+  }
+};
+
+let LANG = (navigator.language || 'en').startsWith('zh') ? 'zh' : 'en';
+const t = (k) => I18N[LANG]?.[k] ?? k;
+
+/* ===========================================================
+   STORAGE
+   =========================================================== */
+const KEY = 'mghub_v1';
+const Store = {
+  load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch { return {}; }
+  },
+  save(s) { localStorage.setItem(KEY, JSON.stringify(s)); },
+  init() {
+    const s = this.load();
+    if (!s.user) s.user = null;
+    if (!s.entries) s.entries = [];
+    if (!s.games) s.games = { fish: { played: 0, best: 0 }, match: { played: 0, best: 0, totalMatches: 0 } };
+    if (!s.referrals) s.referrals = { invited: [], milestonesHit: [] };
+    if (!s.daily) s.daily = { lastBonusDate: null };
+    if (!s.mockUsers) s.mockUsers = this.seedMockUsers();
+    this.save(s);
+    return s;
+  },
+  seedMockUsers() {
+    // Seed leaderboard with mock players so the board isn't empty on first visit.
+    // In production these come from your real backend.
+    const names_en = ['Alex','Sara','Wei','Priya','Marcus','Iman','Ling','Adam','Mei','Kavi','Hafiz','Joy','Nik','Tan','Aina'];
+    const names_zh = ['小明','美玲','志强','雅婷','建华','慧珊','大伟','晓梅','俊杰','秀芳','凯文','静怡','文豪','嘉欣','宇航'];
+    const out = [];
+    for (let i = 0; i < 15; i++) {
+      out.push({
+        name_en: names_en[i],
+        name_zh: names_zh[i],
+        entries: Math.floor(8 + Math.random() * 42)
+      });
+    }
+    return out;
+  }
+};
+
+let STATE = Store.init();
+
+/* ===========================================================
+   UI HELPERS
+   =========================================================== */
+function applyTheme() {
+  const r = document.documentElement.style;
+  Object.entries(CONFIG.theme).forEach(([k, v]) => r.setProperty(`--${k}`, v));
+}
+
+function applyI18N() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    el.textContent = t(key);
+  });
+  document.getElementById('brandName').textContent = LANG === 'zh' ? CONFIG.brand.name_zh : CONFIG.brand.name_en;
+  document.getElementById('brandLogo').textContent = CONFIG.brand.logoEmoji;
+  document.getElementById('pdpaLabel').textContent = CONFIG.pdpa[LANG];
+  document.querySelectorAll('.lang-toggle button').forEach(b => {
+    b.classList.toggle('on', b.dataset.lang === LANG);
+  });
+  if (STATE.user) {
+    document.getElementById('welcomeName').textContent = (LANG === 'zh' ? '嗨， ' : 'Hi, ') + STATE.user.name;
+  }
+  renderPrizes();
+}
+
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const d = document.createElement('div');
+  d.className = 'toast';
+  d.textContent = msg;
+  wrap.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
+function confetti() {
+  const layer = document.getElementById('confettiLayer');
+  const colors = [CONFIG.theme.primary, CONFIG.theme.accent, CONFIG.theme.mint, '#ff80ab', '#ffffff'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.background = colors[i % colors.length];
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = '-20px';
+    p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    p.style.animationDelay = Math.random() * 0.6 + 's';
+    p.style.animationDuration = (2 + Math.random() * 2) + 's';
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 4000);
+  }
+}
+
+function go(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screenId)?.classList.add('active');
+  const showNav = STATE.user && ['home', 'entries', 'referral', 'leaderboard'].includes(screenId);
+  document.getElementById('bottomNav').classList.toggle('show', !!showNav);
+  if (showNav) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.nav === screenId));
+  }
+  // Re-render on navigation
+  if (screenId === 'home') renderHome();
+  if (screenId === 'entries') renderEntries();
+  if (screenId === 'referral') renderReferral();
+  if (screenId === 'leaderboard') renderLeaderboard();
+  window.scrollTo({ top: 0 });
+}
+
+/* ===========================================================
+   COUNTDOWN
+   =========================================================== */
+function tickCountdown() {
+  const end = new Date(CONFIG.campaign.endISO).getTime();
+  const now = Date.now();
+  const diff = Math.max(0, end - now);
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const setIf = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v).padStart(2, '0'); };
+  setIf('cdDays', d); setIf('cdHours', h); setIf('cdMins', m); setIf('cdSecs', s);
+  setIf('hcdDays', d); setIf('hcdHours', h); setIf('hcdMins', m); setIf('hcdSecs', s);
+}
+setInterval(tickCountdown, 1000); tickCountdown();
+
+/* ===========================================================
+   PRIZES
+   =========================================================== */
+function renderPrizes() {
+  const html = CONFIG.prizes.map(p => `
+    <div class="prize-chip">
+      <div class="emoji">${p.emoji}</div>
+      <div class="name">${LANG === 'zh' ? p.name_zh : p.name_en}</div>
+      <div class="qty">×${p.qty}</div>
+    </div>
+  `).join('');
+  ['prizeStrip', 'prizeStripHome'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
+/* ===========================================================
+   REGISTRATION
+   =========================================================== */
+function genId(prefix='USR') {
+  return prefix + '_' + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+function genRefCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 6; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+document.getElementById('regForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const phone = fd.get('phone').trim();
+  const email = fd.get('email').trim();
+  if (!/^[0-9 +\-]{8,16}$/.test(phone)) { toast(t('invalidPhone')); return; }
+  if (!/^\S+@\S+\.\S+$/.test(email)) { toast(t('invalidEmail')); return; }
+  if (!document.getElementById('pdpaCheck').checked) { toast(t('pdpaRequired')); return; }
+
+  const refByRaw = (fd.get('referredBy') || '').trim().toUpperCase();
+  const refBy = refByRaw || null;
+  // Note: in production, validate against backend. Locally we accept anything 6 chars.
+  if (refBy && !/^[A-Z0-9]{4,10}$/.test(refBy)) {
+    toast(t('invalidRefCode'));
+  }
+
+  STATE.user = {
+    id: genId('USR'),
+    name: fd.get('name').trim(),
+    phone, email,
+    telegram: (fd.get('telegram') || '').trim(),
+    refCode: genRefCode(),
+    referredBy: refBy,
+    pdpaConsent: true,
+    pdpaConsentAt: new Date().toISOString(),
+    lang: LANG,
+    registeredAt: Date.now()
+  };
+  // Credit referrer if they're tracked as a mock (in production: backend lookup)
+  if (refBy) {
+    grantEntries(CONFIG.referral.onSignup, 'referral', { friend: STATE.user.name });
+  }
+  Store.save(STATE);
+  toast(t('registered'));
+  go('home');
+});
+
+/* ===========================================================
+   ENTRIES
+   =========================================================== */
+function grantEntries(count, source, meta = {}) {
+  if (!STATE.user) return;
+  STATE.entries.push({
+    id: genId('ENT'),
+    userId: STATE.user.id,
+    count,
+    source,
+    meta,
+    status: 'earned',
+    earnedAt: Date.now()
+  });
+  Store.save(STATE);
+}
+
+function totalEntries() {
+  return STATE.entries.reduce((s, e) => s + e.count, 0);
+}
+
+function checkDailyBonus() {
+  if (!STATE.user) return;
+  const today = new Date().toDateString();
+  if (STATE.daily.lastBonusDate !== today) {
+    grantEntries(CONFIG.entryRules.dailyFirstPlayBonus, 'daily');
+    STATE.daily.lastBonusDate = today;
+    Store.save(STATE);
+    toast(`+${CONFIG.entryRules.dailyFirstPlayBonus} ${t('entries')} — ${t('sourceDaily')}`);
+  }
+}
+
+function checkReferralMilestones() {
+  const count = STATE.referrals.invited.length;
+  CONFIG.referral.milestones.forEach(m => {
+    if (count >= m.count && !STATE.referrals.milestonesHit.includes(m.count)) {
+      STATE.referrals.milestonesHit.push(m.count);
+      grantEntries(m.bonusEntries, 'milestone', { milestone: m.count });
+      Store.save(STATE);
+      confetti();
+      toast(`+${m.bonusEntries} ${t('entries')} — ${m.count} ${LANG === 'zh' ? '位好友里程碑' : 'friends milestone'}!`);
+    }
+  });
+}
+
+/* ===========================================================
+   HOME RENDER
+   =========================================================== */
+function renderHome() {
+  if (!STATE.user) { go('splash'); return; }
+  document.getElementById('totalEntries').textContent = totalEntries();
+  document.getElementById('statGames').textContent = STATE.games.fish.played + STATE.games.match.played;
+  document.getElementById('statRefs').textContent = STATE.referrals.invited.length;
+  document.getElementById('statBest').textContent = Math.max(STATE.games.fish.best, STATE.games.match.best);
+  document.getElementById('welcomeName').textContent = (LANG === 'zh' ? '嗨， ' : 'Hi, ') + STATE.user.name;
+}
+
+/* ===========================================================
+   ENTRIES RENDER
+   =========================================================== */
+function renderEntries() {
+  const list = document.getElementById('entriesList');
+  if (!STATE.entries.length) {
+    list.innerHTML = `<div class="card" style="text-align:center;"><p class="muted">${t('noEntriesYet')}</p></div>`;
+    return;
+  }
+  const sourceLabel = {
+    fish: t('sourceFish'),
+    match: t('sourceMatch'),
+    referral: t('sourceReferral'),
+    milestone: t('sourceMilestone'),
+    daily: t('sourceDaily'),
+    perfect: t('sourcePerfect')
+  };
+  const sourceIcon = { fish: '🐠', match: '🃏', referral: '👥', milestone: '⭐', daily: '☀️', perfect: '🎯' };
+  list.innerHTML = [...STATE.entries].reverse().map(e => `
+    <div class="entry-row">
+      <div class="left">
+        <div class="ico">${sourceIcon[e.source] || '🎟️'}</div>
+        <div>
+          <div style="font-weight:700;">+${e.count} ${t('entries')}</div>
+          <div class="meta">${sourceLabel[e.source] || e.source} · ${new Date(e.earnedAt).toLocaleDateString()}</div>
+        </div>
+      </div>
+      <span class="badge ${e.status}">${t('status' + e.status.charAt(0).toUpperCase() + e.status.slice(1))}</span>
+    </div>
+  `).join('');
+}
+
+/* ===========================================================
+   REFERRAL RENDER
+   =========================================================== */
+function renderReferral() {
+  if (!STATE.user) { go('splash'); return; }
+  document.getElementById('myRefCode').textContent = STATE.user.refCode;
+  const link = `${location.origin}${location.pathname}?ref=${STATE.user.refCode}`;
+  document.getElementById('myRefLink').textContent = link;
+  const ms = document.getElementById('milestoneList');
+  const friendCount = STATE.referrals.invited.length;
+  ms.innerHTML = CONFIG.referral.milestones.map(m => {
+    const hit = STATE.referrals.milestonesHit.includes(m.count);
+    const label = LANG === 'zh' ? m.label_zh : m.label_en;
+    return `
+      <div class="milestone ${hit ? 'unlocked' : ''}">
+        <div>
+          <div style="font-weight:700;">${label}</div>
+          <div class="muted" style="font-size:11px;">${friendCount}/${m.count} ${LANG === 'zh' ? '已邀请' : 'invited'}</div>
+        </div>
+        <div class="reward">+${m.bonusEntries} ${t('entries')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ===========================================================
+   LEADERBOARD
+   =========================================================== */
+function renderLeaderboard() {
+  if (!STATE.user) { go('splash'); return; }
+  const me = { name: STATE.user.name, entries: totalEntries(), isMe: true };
+  const board = STATE.mockUsers.map(u => ({
+    name: LANG === 'zh' ? u.name_zh : u.name_en,
+    entries: u.entries,
+    isMe: false
+  }));
+  board.push(me);
+  board.sort((a, b) => b.entries - a.entries);
+  const html = board.slice(0, 12).map((u, i) => `
+    <div class="lb-row ${u.isMe ? 'me' : ''}">
+      <div class="rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
+      <div style="font-weight:700;">${u.name}${u.isMe ? ' ⭐' : ''}</div>
+      <div class="ent">${u.entries}</div>
+    </div>
+  `).join('');
+  document.getElementById('lbList').innerHTML = html;
+}
+
+/* ===========================================================
+   SHARE
+   =========================================================== */
+const Share = {
+  textBody() {
+    if (!STATE.user) return '';
+    return I18N[LANG].shareText(STATE.user.refCode) +
+           '\n\n' + location.origin + location.pathname + '?ref=' + STATE.user.refCode;
+  },
+  via(channel) {
+    const body = this.textBody();
+    const enc = encodeURIComponent(body);
+    let url;
+    if (channel === 'whatsapp') url = `https://wa.me/?text=${enc}`;
+    else if (channel === 'telegram') url = `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${enc}`;
+    else if (channel === 'facebook') url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.origin + location.pathname + '?ref=' + STATE.user.refCode)}`;
+    else if (channel === 'copy') {
+      navigator.clipboard?.writeText(body);
+      toast(t('copiedLink'));
+      return;
+    }
+    if (url) window.open(url, '_blank');
+  }
+};
+
+/* ===========================================================
+   GAME 1: FISH HUNTER
+   =========================================================== */
+const Fish = {
+  cv: null, ctx: null, raf: null,
+  fishes: [], particles: [], score: 0, entries: 0, time: 60, running: false,
+  lastSpawn: 0, lastTick: 0,
+
+  start() {
+    if (!STATE.user) { go('splash'); return; }
+    checkDailyBonus();
+    document.getElementById('fishScreen').classList.add('active');
+    this.cv = document.getElementById('fishCanvas');
+    this.ctx = this.cv.getContext('2d');
+    this.resize();
+    window.addEventListener('resize', this.resize.bind(this));
+    this.fishes = []; this.particles = [];
+    this.score = 0; this.entries = 0; this.time = 60;
+    this.running = true; this.lastSpawn = 0; this.lastTick = performance.now();
+    this.updateHud();
+    this.cv.addEventListener('pointerdown', this.onTap.bind(this));
+    this.loop();
+  },
+
+  resize() {
+    if (!this.cv) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const r = this.cv.getBoundingClientRect();
+    this.cv.width = r.width * dpr;
+    this.cv.height = r.height * dpr;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.w = r.width; this.h = r.height;
+  },
+
+  spawn() {
+    // Weighted fish types
+    // small (60%), medium (25%), large (10%), golden (4%), brand (1%)
+    const r = Math.random();
+    let type;
+    if (r < 0.60) type = 'small';
+    else if (r < 0.85) type = 'medium';
+    else if (r < 0.95) type = 'large';
+    else if (r < 0.99) type = 'golden';
+    else type = 'brand';
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const y = 40 + Math.random() * (this.h - 80);
+    const speed = (type === 'brand' ? 90 : type === 'golden' ? 110 : type === 'large' ? 70 : type === 'medium' ? 95 : 130);
+    const size = { small: 22, medium: 32, large: 44, golden: 30, brand: 38 }[type];
+    this.fishes.push({
+      type,
+      x: dir > 0 ? -size : this.w + size,
+      y,
+      vx: dir * speed,
+      vy: 0,
+      size,
+      wobble: Math.random() * Math.PI * 2,
+      caught: false
+    });
+  },
+
+  drawFish(f) {
+    const ctx = this.ctx;
+    f.wobble += 0.1;
+    ctx.save();
+    ctx.translate(f.x, f.y + Math.sin(f.wobble) * 3);
+    if (f.vx < 0) ctx.scale(-1, 1);
+    // Body
+    const colors = {
+      small:  ['#FF8DA1', '#D14B6B'],
+      medium: ['#5DD3D8', '#218B91'],
+      large:  ['#7AA7FF', '#3B5BD9'],
+      golden: ['#FFE066', '#E6A800'],
+      brand:  [CONFIG.theme.primary, CONFIG.theme.accent]
+    }[f.type];
+    const grd = ctx.createLinearGradient(0, -f.size/2, 0, f.size/2);
+    grd.addColorStop(0, colors[0]); grd.addColorStop(1, colors[1]);
+    ctx.fillStyle = grd;
+    // Body ellipse
+    ctx.beginPath();
+    ctx.ellipse(0, 0, f.size, f.size * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tail
+    ctx.beginPath();
+    ctx.moveTo(-f.size * 0.9, 0);
+    ctx.lineTo(-f.size * 1.5, -f.size * 0.45);
+    ctx.lineTo(-f.size * 1.5,  f.size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(f.size * 0.45, -f.size * 0.15, f.size * 0.13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0a1428';
+    ctx.beginPath(); ctx.arc(f.size * 0.5, -f.size * 0.15, f.size * 0.07, 0, Math.PI * 2); ctx.fill();
+    // Brand fish marker (a small star)
+    if (f.type === 'brand') {
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${f.size * 0.5}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('★', 0, 0);
+    }
+    // Glow for golden / brand
+    if (f.type === 'golden' || f.type === 'brand') {
+      ctx.shadowColor = f.type === 'brand' ? CONFIG.theme.accent : '#FFE066';
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, f.size + 2, f.size * 0.55 + 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  splash(x, y, color, big) {
+    for (let i = 0; i < (big ? 18 : 10); i++) {
+      this.particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * (big ? 280 : 160),
+        vy: -Math.random() * (big ? 280 : 180) - 30,
+        life: 0.7, age: 0,
+        color,
+        size: big ? 5 + Math.random() * 4 : 3 + Math.random() * 3
+      });
+    }
+  },
+
+  drawScorePop(x, y, text, color) {
+    this.particles.push({
+      isText: true,
+      x, y,
+      vy: -50,
+      life: 1.0, age: 0,
+      color, text
+    });
+  },
+
+  drawBackground() {
+    const ctx = this.ctx;
+    // Underwater gradient
+    const g = ctx.createLinearGradient(0, 0, 0, this.h);
+    g.addColorStop(0, '#0d2a4a'); g.addColorStop(0.5, '#0a1e3a'); g.addColorStop(1, '#06122a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, this.w, this.h);
+    // Light rays
+    ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = '#7AC7FF';
+    for (let i = 0; i < 3; i++) {
+      const x = (this.w * 0.2) + i * (this.w * 0.3) + Math.sin(Date.now() / 2000 + i) * 20;
+      ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x - 40, this.h); ctx.lineTo(x + 60, this.h); ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    // Bubbles
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    const t = Date.now() / 1000;
+    for (let i = 0; i < 8; i++) {
+      const x = ((i * 73) + Math.sin(t + i) * 30) % this.w;
+      const y = (this.h - ((t * (20 + i * 5)) % (this.h + 40)));
+      ctx.beginPath(); ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2); ctx.fill();
+    }
+  },
+
+  onTap(e) {
+    if (!this.running) return;
+    const r = this.cv.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    // Find topmost fish under tap, within size radius
+    for (let i = this.fishes.length - 1; i >= 0; i--) {
+      const f = this.fishes[i];
+      if (f.caught) continue;
+      const dx = x - f.x, dy = y - f.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= f.size * 1.1) {
+        this.catch(f, x, y);
+        break;
+      }
+    }
+  },
+
+  catch(f, x, y) {
+    f.caught = true;
+    const points = { small: 1, medium: 3, large: 5, golden: 10, brand: 15 }[f.type];
+    this.score += points;
+    let color = '#fff';
+    if (f.type === 'golden') color = CONFIG.theme.accent;
+    if (f.type === 'brand')  { color = CONFIG.theme.accent; this.entries += 1; }
+    this.splash(x, y, color, f.type === 'golden' || f.type === 'brand');
+    this.drawScorePop(x, y, '+' + points, color);
+    if (f.type === 'brand') {
+      this.drawScorePop(x, y - 20, '+1 ENTRY', CONFIG.theme.primary);
+    }
+    this.updateHud();
+  },
+
+  updateHud() {
+    document.getElementById('fishScore').textContent = this.score;
+    document.getElementById('fishTime').textContent = Math.ceil(this.time);
+    document.getElementById('fishEntries').textContent = this.entries;
+  },
+
+  loop() {
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - this.lastTick) / 1000);
+    this.lastTick = now;
+    if (this.running) {
+      this.time -= dt;
+      if (this.time <= 0) { this.time = 0; this.end(); return; }
+      // Spawn
+      this.lastSpawn += dt;
+      const spawnRate = 0.45; // seconds
+      while (this.lastSpawn > spawnRate) { this.spawn(); this.lastSpawn -= spawnRate; }
+      // Move
+      this.fishes.forEach(f => { f.x += f.vx * dt; });
+      this.fishes = this.fishes.filter(f => !f.caught && f.x > -100 && f.x < this.w + 100);
+      // Particles
+      this.particles.forEach(p => {
+        p.age += dt;
+        if (p.isText) p.y += p.vy * dt;
+        else { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; }
+      });
+      this.particles = this.particles.filter(p => p.age < p.life);
+    }
+    // Render
+    this.drawBackground();
+    this.fishes.forEach(f => this.drawFish(f));
+    const ctx = this.ctx;
+    this.particles.forEach(p => {
+      const a = 1 - (p.age / p.life);
+      ctx.globalAlpha = a;
+      if (p.isText) {
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillStyle = p.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(p.text, p.x, p.y);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+    this.updateHud();
+    this.raf = requestAnimationFrame(this.loop.bind(this));
+  },
+
+  end() {
+    this.running = false;
+    cancelAnimationFrame(this.raf);
+    // Score-tier entries
+    const tier = [...CONFIG.entryRules.fishHunter].reverse().find(r => this.score >= r.minScore);
+    const scoreEntries = tier ? tier.entries : 0;
+    const totalEnt = scoreEntries + this.entries;
+    if (totalEnt > 0) {
+      grantEntries(totalEnt, 'fish', { score: this.score, scoreEntries, brandFishEntries: this.entries });
+    }
+    STATE.games.fish.played++;
+    if (this.score > STATE.games.fish.best) STATE.games.fish.best = this.score;
+    Store.save(STATE);
+    showResult({ label: t('fishHunter'), score: this.score, entries: totalEnt });
+    document.getElementById('fishScreen').classList.remove('active');
+  },
+
+  quit() {
+    this.running = false;
+    cancelAnimationFrame(this.raf);
+    document.getElementById('fishScreen').classList.remove('active');
+  }
+};
+
+/* ===========================================================
+   GAME 2: MEMORY MATCH
+   =========================================================== */
+const Match = {
+  board: null, cards: [], flipped: [], matches: 0, score: 0, time: 60, running: false,
+  timer: null, lastMatchTime: 0, streak: 0,
+  emojis: ['🎁', '🎈', '🎉', '⭐', '🏆', '💎', '🎊', '🎯'],
+
+  start() {
+    if (!STATE.user) { go('splash'); return; }
+    checkDailyBonus();
+    document.getElementById('matchScreen').classList.add('active');
+    this.board = document.getElementById('matchBoard');
+    this.matches = 0; this.score = 0; this.time = 60;
+    this.flipped = []; this.streak = 0;
+    this.running = true;
+    // Build deck: 8 pairs of 8 emojis, shuffled
+    const deck = [...this.emojis, ...this.emojis]
+      .map(v => ({ v, k: Math.random() }))
+      .sort((a, b) => a.k - b.k);
+    this.cards = deck.map((c, i) => ({ id: i, value: c.v, matched: false, flipped: false }));
+    this.render();
+    this.updateHud();
+    clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      if (!this.running) return;
+      this.time--;
+      this.updateHud();
+      if (this.time <= 0) this.end();
+    }, 1000);
+  },
+
+  render() {
+    this.board.innerHTML = this.cards.map(c => `
+      <div class="mcard ${c.flipped || c.matched ? 'flipped' : ''} ${c.matched ? 'matched' : ''}" data-id="${c.id}">
+        <div class="face back">?</div>
+        <div class="face front">${c.value}</div>
+      </div>
+    `).join('');
+    this.board.querySelectorAll('.mcard').forEach(el => {
+      el.addEventListener('click', () => this.flip(parseInt(el.dataset.id)));
+    });
+  },
+
+  flip(id) {
+    if (!this.running) return;
+    const card = this.cards.find(c => c.id === id);
+    if (!card || card.matched || card.flipped) return;
+    if (this.flipped.length === 2) return;
+    card.flipped = true;
+    this.flipped.push(card);
+    this.render();
+    if (this.flipped.length === 2) {
+      setTimeout(() => this.checkMatch(), 600);
+    }
+  },
+
+  checkMatch() {
+    const [a, b] = this.flipped;
+    if (a.value === b.value) {
+      a.matched = true; b.matched = true;
+      this.matches++;
+      const now = Date.now();
+      const fast = now - this.lastMatchTime < 2500;
+      this.streak = fast ? this.streak + 1 : 1;
+      this.lastMatchTime = now;
+      const combo = Math.min(this.streak, 5);
+      const gained = 50 * combo;
+      this.score += gained;
+      if (this.streak > 1) toast(`×${combo} combo · +${gained}`);
+      if (this.matches === 8) {
+        setTimeout(() => this.end(true), 400);
+      }
+    } else {
+      a.flipped = false; b.flipped = false;
+      this.streak = 0;
+    }
+    this.flipped = [];
+    this.render();
+    this.updateHud();
+  },
+
+  updateHud() {
+    document.getElementById('matchScore').textContent = this.score;
+    document.getElementById('matchTime').textContent = this.time;
+    document.getElementById('matchPairs').textContent = this.matches + '/8';
+  },
+
+  end(perfect = false) {
+    this.running = false;
+    clearInterval(this.timer);
+    const tier = [...CONFIG.entryRules.memoryMatch].reverse().find(r => this.matches >= r.minMatches);
+    let scoreEntries = tier ? tier.entries : 0;
+    let perfectBonus = 0;
+    if (perfect) {
+      perfectBonus = CONFIG.entryRules.perfectMatchBonus;
+      // Add time-remaining bonus to score for display
+      this.score += this.time * 10;
+      toast(t('perfectClear'));
+    }
+    const totalEnt = scoreEntries + perfectBonus;
+    if (totalEnt > 0) {
+      grantEntries(totalEnt, perfect ? 'perfect' : 'match', { matches: this.matches, score: this.score });
+    }
+    STATE.games.match.played++;
+    STATE.games.match.totalMatches += this.matches;
+    if (this.score > STATE.games.match.best) STATE.games.match.best = this.score;
+    Store.save(STATE);
+    showResult({ label: t('memoryMatch'), score: this.score, entries: totalEnt });
+    document.getElementById('matchScreen').classList.remove('active');
+  },
+
+  quit() {
+    this.running = false;
+    clearInterval(this.timer);
+    document.getElementById('matchScreen').classList.remove('active');
+  }
+};
+
+/* ===========================================================
+   RESULT MODAL
+   =========================================================== */
+function showResult({ label, score, entries }) {
+  document.getElementById('resultLabel').textContent = label;
+  document.getElementById('resultScoreText').textContent = score;
+  document.getElementById('resultEntries').textContent = `+${entries} ${t('entries')}`;
+  document.getElementById('resultScreen').classList.add('active');
+  if (entries > 0) confetti();
+}
+function resultClose() {
+  document.getElementById('resultScreen').classList.remove('active');
+  go('home');
+}
+
+/* ===========================================================
+   ADMIN
+   =========================================================== */
+const Admin = {
+  active: 'stats',
+  unlock() {
+    const pw = document.getElementById('adminPw').value;
+    if (pw !== CONFIG.admin.password) { toast('Wrong password'); return; }
+    document.getElementById('adminGate').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+    this.bindTabs();
+    this.renderTab('stats');
+  },
+  bindTabs() {
+    document.querySelectorAll('.admin-tabs button').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('.admin-tabs button').forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+        this.renderTab(b.dataset.tab);
+      };
+    });
+  },
+  renderTab(tab) {
+    this.active = tab;
+    const c = document.getElementById('adminTabContent');
+    if (tab === 'stats') {
+      const totalEnt = STATE.entries.reduce((s, e) => s + e.count, 0);
+      const totalGames = STATE.games.fish.played + STATE.games.match.played;
+      const realUsers = STATE.user ? 1 : 0;
+      c.innerHTML = `
+        <div class="stats-row">
+          <div class="stat"><div class="n">${realUsers}</div><div class="l">Real users</div></div>
+          <div class="stat"><div class="n">${totalGames}</div><div class="l">Games played</div></div>
+          <div class="stat"><div class="n">${totalEnt}</div><div class="l">Entries earned</div></div>
+        </div>
+        <div class="card mt-12">
+          <h3 class="h-section" style="font-size:14px;">Campaign window</h3>
+          <p style="font-size:12px;" class="muted">Start: ${new Date(CONFIG.campaign.startISO).toLocaleString()}</p>
+          <p style="font-size:12px;" class="muted">End: ${new Date(CONFIG.campaign.endISO).toLocaleString()}</p>
+          <p style="font-size:12px;" class="muted">Draw: ${new Date(CONFIG.campaign.drawDateISO).toLocaleString()}</p>
+        </div>
+        <p class="muted mt-12" style="font-size:11px;">Note: This MVP stores data in browser localStorage. In production, replace Store with backend API calls (Firebase, Supabase, your own server). The mockUsers seed is for leaderboard demo only.</p>
+      `;
+    } else if (tab === 'users') {
+      const u = STATE.user;
+      c.innerHTML = u ? `
+        <table class="admin-table">
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>ID</td><td>${u.id}</td></tr>
+          <tr><td>Name</td><td>${u.name}</td></tr>
+          <tr><td>Phone</td><td>${u.phone}</td></tr>
+          <tr><td>Email</td><td>${u.email}</td></tr>
+          <tr><td>Telegram</td><td>${u.telegram || '—'}</td></tr>
+          <tr><td>Ref code</td><td>${u.refCode}</td></tr>
+          <tr><td>Referred by</td><td>${u.referredBy || '—'}</td></tr>
+          <tr><td>PDPA consent</td><td>${u.pdpaConsent ? '✓ ' + new Date(u.pdpaConsentAt).toLocaleString() : '—'}</td></tr>
+          <tr><td>Registered</td><td>${new Date(u.registeredAt).toLocaleString()}</td></tr>
+        </table>
+      ` : `<p class="muted">No registered user in this browser.</p>`;
+    } else if (tab === 'entries') {
+      if (!STATE.entries.length) { c.innerHTML = `<p class="muted">No entries yet.</p>`; return; }
+      c.innerHTML = `
+        <table class="admin-table">
+          <tr><th>ID</th><th>Source</th><th>Count</th><th>Status</th><th>Earned</th></tr>
+          ${STATE.entries.map(e => `
+            <tr>
+              <td>${e.id}</td>
+              <td>${e.source}</td>
+              <td>${e.count}</td>
+              <td><span class="badge ${e.status}">${e.status}</span></td>
+              <td>${new Date(e.earnedAt).toLocaleDateString()}</td>
+            </tr>
+          `).join('')}
+        </table>
+      `;
+    } else if (tab === 'draw') {
+      const totalEnt = STATE.entries.reduce((s, e) => s + e.count, 0);
+      c.innerHTML = `
+        <div class="card">
+          <h3 class="h-section" style="font-size:14px;">Conduct prize draw</h3>
+          <p class="muted" style="font-size:12px;">Run a weighted random draw over all earned entries. In production, run this only after the campaign close date and from an audited backend.</p>
+          <p class="mt-12"><strong>Eligible entries:</strong> ${totalEnt}</p>
+          ${CONFIG.prizes.map(p => `
+            <button class="btn sm mt-8" style="margin-right:6px;" onclick="Admin.drawPrize('${p.tier}')">${p.emoji} Draw ${p.name_en}</button>
+          `).join('')}
+          <div id="drawResult" class="mt-12"></div>
+        </div>
+      `;
+    } else if (tab === 'export') {
+      c.innerHTML = `
+        <div class="card">
+          <h3 class="h-section" style="font-size:14px;">Export data</h3>
+          <p class="muted" style="font-size:12px;">Download CSV of user + entries for prize verification and reporting.</p>
+          <button class="btn mt-12" onclick="Admin.exportCSV('users')">Export Users CSV</button>
+          <button class="btn ghost mt-8" onclick="Admin.exportCSV('entries')">Export Entries CSV</button>
+        </div>
+      `;
+    }
+  },
+  drawPrize(tier) {
+    const prize = CONFIG.prizes.find(p => p.tier === tier);
+    if (!prize) return;
+    if (!STATE.user || !STATE.entries.length) {
+      document.getElementById('drawResult').innerHTML = `<p class="muted">No eligible entries to draw from.</p>`;
+      return;
+    }
+    // In demo: just pick the local user (only real user). Weight by entries.
+    const winnerName = STATE.user.name;
+    document.getElementById('drawResult').innerHTML = `
+      <div class="card" style="background: var(--accent); margin-top: 12px;">
+        <strong>🏆 Winner of ${prize.emoji} ${prize.name_en}:</strong> ${winnerName} (${STATE.user.phone})
+      </div>
+    `;
+  },
+  exportCSV(type) {
+    let csv = '';
+    if (type === 'users') {
+      csv = 'id,name,phone,email,telegram,refCode,referredBy,pdpaConsent,registeredAt\n';
+      if (STATE.user) {
+        const u = STATE.user;
+        csv += `${u.id},${u.name},${u.phone},${u.email},${u.telegram},${u.refCode},${u.referredBy || ''},${u.pdpaConsent},${new Date(u.registeredAt).toISOString()}\n`;
+      }
+    } else if (type === 'entries') {
+      csv = 'id,userId,count,source,status,earnedAt\n';
+      STATE.entries.forEach(e => {
+        csv += `${e.id},${e.userId},${e.count},${e.source},${e.status},${new Date(e.earnedAt).toISOString()}\n`;
+      });
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${type}-${Date.now()}.csv`;
+    a.click();
+  }
+};
+
+/* ===========================================================
+   NAVIGATION BINDINGS
+   =========================================================== */
+document.querySelectorAll('.lang-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    LANG = b.dataset.lang;
+    applyI18N();
+    // Re-render active screen
+    const active = document.querySelector('.screen.active')?.id?.replace('screen-', '');
+    if (active) go(active);
+  });
+});
+
+document.querySelectorAll('.nav-btn').forEach(b => {
+  b.addEventListener('click', () => go(b.dataset.nav));
+});
+
+// Hidden admin trigger: triple-tap logo
+let logoTaps = [];
+document.getElementById('brandLogo').addEventListener('click', () => {
+  logoTaps.push(Date.now());
+  logoTaps = logoTaps.filter(t => Date.now() - t < 1200);
+  if (logoTaps.length >= 3) { logoTaps = []; go('admin'); }
+});
+
+/* ===========================================================
+   INIT
+   =========================================================== */
+function init() {
+  applyTheme();
+  // Parse ?ref= from URL and prefill
+  const params = new URLSearchParams(location.search);
+  const refFromUrl = params.get('ref');
+  if (refFromUrl) {
+    document.getElementById('referredByInput').value = refFromUrl.toUpperCase();
+  }
+  applyI18N();
+  if (STATE.user) {
+    go('home');
+    checkReferralMilestones();
+  } else {
+    go('splash');
+  }
+}
+init();
+
+// PWA service worker (lightweight, optional)
+if ('serviceWorker' in navigator) {
+  const sw = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response(''))));`;
+  const blob = new Blob([sw], { type: 'text/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+</script>
+</body>
+</html>
